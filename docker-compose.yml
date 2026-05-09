@@ -1,0 +1,152 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: smartlogix-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: smartlogix123
+      MYSQL_USER: smartlogix_user
+      MYSQL_PASSWORD: smartlogix123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - smartlogix-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: smartlogix-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: smartlogix
+      RABBITMQ_DEFAULT_PASS: smartlogix123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - smartlogix-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      timeout: 20s
+      retries: 10
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: smartlogix-gateway
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      - inventario-service
+      - pedidos-service
+      - bff-service
+    networks:
+      - smartlogix-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - INVENTARIO_SERVICE_URL=http://inventario-service:8081
+      - PEDIDOS_SERVICE_URL=http://pedidos-service:8082
+      - BFF_SERVICE_URL=http://bff-service:8090
+      - ENVIOS_SERVICE_URL=http://envios-service:8083
+
+  bff-service:
+    build:
+      context: ./bff-service
+      dockerfile: Dockerfile
+    container_name: smartlogix-bff
+    ports:
+      - "8090:8090"
+    restart: unless-stopped
+    depends_on:
+      - inventario-service
+      - pedidos-service
+    networks:
+      - smartlogix-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - INVENTARIO_SERVICE_URL=http://inventario-service:8081
+      - PEDIDOS_SERVICE_URL=http://pedidos-service:8082
+      - ENVIOS_SERVICE_URL=http://envios-service:8083
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/bff_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=smartlogix123
+
+  inventario-service:
+    build:
+      context: ./inventario-service
+      dockerfile: Dockerfile
+    container_name: smartlogix-inventario
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    networks:
+      - smartlogix-network
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/inventario_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=smartlogix123
+
+  pedidos-service:
+    build:
+      context: ./pedidos-service
+      dockerfile: Dockerfile
+    container_name: smartlogix-pedidos
+    ports:
+      - "8082:8082"
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - rabbitmq
+    networks:
+      - smartlogix-network
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/pedidos_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=smartlogix123
+      - INVENTARIO_SERVICE_URL=http://inventario-service:8081
+
+  envios-service:
+    build:
+      context: ./envios-service
+      dockerfile: Dockerfile
+    container_name: smartlogix-envios
+    ports:
+      - "8083:8083"
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - rabbitmq
+    networks:
+      - smartlogix-network
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/envios_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=smartlogix123
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smartlogix-frontend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - api-gateway
+    networks:
+      - smartlogix-network
+
+volumes:
+  mysql_data:
+
+networks:
+  smartlogix-network:
+    driver: bridge
