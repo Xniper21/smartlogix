@@ -4,7 +4,7 @@
 
 - Java 17 o superior
 - Maven 3.8.1 o superior
-- Node.js 18+ (para frontend)
+- Node.js React 18+ (para frontend)
 - Docker y Docker Compose (opcional pero recomendado)
 - MySQL 8.0 (si ejecutas sin Docker)
 

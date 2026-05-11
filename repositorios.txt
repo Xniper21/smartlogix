@@ -1,0 +1,484 @@
+================================================================================
+SMARTLOGIX - ENLACES A REPOSITORIOS GITHUB
+Evaluación Parcial N°2
+Mayo 2026
+================================================================================
+
+REPOSITORIO PRINCIPAL
+═══════════════════════════════════════════════════════════════════════════════
+
+Nombre: SmartLogix (Monorepo)
+Enlace: https://github.com/Xniper21/smartlogix.git
+Rama Principal: main
+Rama Desarrollo: develop
+
+Descripción:
+Repositorio monorepo que contiene la estructura completa del proyecto, incluyendo
+todos los componentes frontend, BFF, microservicios, configuración Docker y 
+documentación. Todos los servicios están versionados y listos para producción.
+
+Contenido:
+- Frontend React con Vite y Tailwind CSS
+- Backend For Frontend (BFF) en Spring Boot
+- Microservicio de Inventario
+- Microservicio de Pedidos
+- Microservicio de Envíos
+- API Gateway
+- Docker Compose para despliegue completo
+- Documentación y guías de instalación
+
+
+COMPONENTES FRONTEND
+═══════════════════════════════════════════════════════════════════════════════
+
+Nombre: smartlogix-frontend
+Ubicación en Monorepo: /frontend
+
+Descripción:
+Componente frontend empaquetado como módulo NPM independiente. Contiene la 
+interfaz de usuario responsiva desarrollada con React 18.2.0, Vite 5.0.0 y 
+Tailwind CSS 3.4.4.
+
+Características:
+- Componentes React funcionales con hooks
+- Dashboard con gráficos interactivos (Recharts)
+- Formularios para creación de pedidos
+- Autenticación de usuarios
+- Diseño responsivo y moderno
+- Animaciones y skeleton loading
+
+Scripts disponibles:
+- npm run dev      → Servidor de desarrollo (puerto 3000)
+- npm run build    → Build para producción
+- npm run preview  → Previsualizar build
+
+Dependencias principales:
+- React 18.2.0
+- React Router DOM 6.18.0
+- Axios 1.6.0
+- Recharts 3.8.1
+- Tailwind CSS 3.4.4
+- Vite 5.0.0
+
+
+BACKEND FOR FRONTEND (BFF)
+═══════════════════════════════════════════════════════════════════════════════
+
+Nombre: smartlogix-bff-service
+Ubicación en Monorepo: /bff-service
+Versión: 1.0.0
+Puerto: 8090
+
+Descripción:
+Microservicio especializado que agrega datos de múltiples servicios backend
+para las necesidades específicas del frontend. Implementa patrones de BFF
+para optimizar respuestas y reducir latencia en operaciones cliente.
+
+Responsabilidades:
+- Agregación de datos desde Inventario, Pedidos y Envíos
+- Optimización de respuestas para el frontend
+- Transformación de formatos de datos
+- Caché de respuestas frecuentes
+- Validación centralizada de seguridad
+
+Endpoints principales:
+- GET /api/dashboard/stats     → Estadísticas consolidadas del dashboard
+- GET /api/usuario             → Datos del usuario autenticado
+- POST /api/logout             → Cierre de sesión
+
+Tecnologías:
+- Spring Boot 3.2.0
+- Java 17
+- Spring Data JPA
+- Spring Security
+- MySQL 8.0
+
+Compilación:
+- mvn clean package -DskipTests
+
+Ejecución:
+- java -jar target/bff-service-1.0.0.jar
+- Disponible en: http://localhost:8090
+
+Docker:
+- docker build -t bff-service:1.0.0 .
+- docker run -p 8090:8090 bff-service:1.0.0
+
+
+MICROSERVICIO: INVENTARIO
+═══════════════════════════════════════════════════════════════════════════════
+
+Nombre: smartlogix-inventario-service
+Ubicación en Monorepo: /inventario-service
+Versión: 1.0.0
+Puerto: 8081
+
+Descripción:
+Microservicio encargado de gestionar el catálogo de productos, niveles de stock
+y notificaciones de disponibilidad. Proporciona endpoints para consultar,
+crear, actualizar y eliminar productos, así como controlar el inventario.
+
+Responsabilidades:
+- CRUD completo de productos
+- Control de niveles de stock
+- Alertas de productos agotados o bajo stock
+- Validación de disponibilidad
+- Decrementar/incrementar inventario
+
+Endpoints principales:
+- GET /api/inventario/productos              → Lista todos los productos
+- GET /api/inventario/productos/{id}         → Detalles de un producto
+- POST /api/inventario/productos             → Crear nuevo producto
+- PUT /api/inventario/productos/{id}         → Actualizar producto
+- POST /api/inventario/productos/{id}/decrementar → Disminuir stock
+- POST /api/inventario/productos/{id}/incrementar → Aumentar stock
+- GET /api/inventario/agotados               → Productos sin stock
+- GET /api/inventario/bajo-stock             → Productos con bajo stock
+
+Entidades:
+- Producto (con id, nombre, descripción, precio, stock, stockMinimo)
+
+Tecnologías:
+- Spring Boot 3.2.0
+- Java 17
+- Spring Data JPA
+- MySQL 8.0
+
+Compilación:
+- mvn clean package -DskipTests
+
+Ejecución:
+- java -jar target/inventario-service-1.0.0.jar
+- Disponible en: http://localhost:8081
+
+Docker:
+- docker build -t inventario-service:1.0.0 .
+- docker run -p 8081:8081 inventario-service:1.0.0
+
+
+MICROSERVICIO: PEDIDOS
+═══════════════════════════════════════════════════════════════════════════════
+
+Nombre: smartlogix-pedidos-service
+Ubicación en Monorepo: /pedidos-service
+Versión: 1.0.0
+Puerto: 8082
+
+Descripción:
+Microservicio para crear, procesar y rastrear órdenes de compra. Gestiona
+el ciclo de vida completo de los pedidos, desde la creación hasta la entrega,
+coordinando con los servicios de Inventario y Envíos.
+
+Responsabilidades:
+- Creación de nuevos pedidos
+- Validación de disponibilidad con Inventario
+- Gestión de estados (Pendiente, Confirmado, Entregado, Cancelado)
+- Coordinación con Envíos
+- Cálculo de montos y totales
+- Reportes y estadísticas
+
+Endpoints principales:
+- GET /api/pedidos                    → Lista todos los pedidos
+- GET /api/pedidos/{id}               → Detalles de un pedido
+- POST /api/pedidos                   → Crear nuevo pedido
+- PUT /api/pedidos/{id}               → Actualizar pedido
+- PUT /api/pedidos/{id}/estado        → Cambiar estado
+- DELETE /api/pedidos/{id}            → Cancelar pedido
+- GET /api/pedidos/estado/{estado}    → Listar por estado
+- GET /api/pedidos/estadisticas       → Estadísticas consolidadas
+
+Estados de Pedido:
+- PENDIENTE    → Recién creado, esperando validación
+- CONFIRMADO   → Validado y confirmado
+- ENTREGADO    → Completado y entregado al cliente
+- CANCELADO    → Cancelado por el cliente o sistema
+
+Tipos de Envío:
+- NORMAL  → Envío estándar
+- EXPRESS → Envío express (más rápido, más caro)
+
+Tecnologías:
+- Spring Boot 3.2.0
+- Java 17
+- Spring Data JPA
+- MySQL 8.0
+
+Compilación:
+- mvn clean package -DskipTests
+
+Ejecución:
+- java -jar target/pedidos-service-1.0.0.jar
+- Disponible en: http://localhost:8082
+
+Docker:
+- docker build -t pedidos-service:1.0.0 .
+- docker run -p 8082:8082 pedidos-service:1.0.0
+
+
+MICROSERVICIO: ENVÍOS (ADICIONAL)
+═══════════════════════════════════════════════════════════════════════════════
+
+Nombre: smartlogix-envios-service
+Ubicación en Monorepo: /envios-service
+Versión: 1.0.0
+Puerto: 8083
+
+Descripción:
+Microservicio adicional para gestionar la logística y seguimiento de envíos.
+Coordina con el servicio de Pedidos para crear órdenes de envío y proporciona
+seguimiento a clientes.
+
+Responsabilidades:
+- Crear órdenes de envío desde pedidos confirmados
+- Gestionar diferentes tipos de envío
+- Seguimiento de entregas
+- Notificaciones a clientes
+- Integración con proveedores de logística
+
+Tecnologías:
+- Spring Boot 3.2.0
+- Java 17
+- Spring Data JPA
+- MySQL 8.0
+
+Compilación:
+- mvn clean package -DskipTests
+
+Ejecución:
+- java -jar target/envios-service-1.0.0.jar
+- Disponible en: http://localhost:8083
+
+Docker:
+- docker build -t envios-service:1.0.0 .
+- docker run -p 8083:8083 envios-service:1.0.0
+
+
+API GATEWAY
+═══════════════════════════════════════════════════════════════════════════════
+
+Nombre: smartlogix-api-gateway
+Ubicación en Monorepo: /api-gateway
+Versión: 1.0.0
+Puerto: 8000
+
+Descripción:
+Punto de entrada único para todas las solicitudes al backend. Implementa
+enrutamiento dinámico, Circuit Breaker, CORS, rate limiting y autenticación
+centralizada.
+
+Responsabilidades:
+- Enrutamiento de solicitudes a microservicios
+- Circuit Breaker para manejo de fallos
+- CORS management
+- Rate limiting
+- Autenticación centralizada
+
+Rutas configuradas:
+- /api/dashboard/**  → BFF Service (8090)
+- /api/inventario/** → Inventario Service (8081)
+- /api/pedidos/**    → Pedidos Service (8082)
+- /api/envios/**     → Envíos Service (8083)
+
+Tecnologías:
+- Spring Cloud Gateway
+- Spring Boot 3.2.0
+- Java 17
+
+
+PATRONES Y ARQUETIPOS UTILIZADOS
+═══════════════════════════════════════════════════════════════════════════════
+
+Arquetipos Maven Base:
+1. org.springframework.boot:spring-boot-starter-parent (3.2.0)
+   - Configuración predefinida de Spring Boot
+   - Gestión de versiones de dependencias
+   - Plugins de compilación
+
+2. Custom Microservicio Base
+   - Estructura de carpetas estándar
+   - Capas: Controller, Service, Repository, Entity, DTO
+   - Configuración de application.properties
+   - Dockerfile para containerización
+
+Patrones Implementados:
+1. Arquitectura de Microservicios
+   - Escalabilidad independiente
+   - Deployment independiente
+   - Resiliencia y tolerancia a fallos
+
+2. Backend For Frontend (BFF)
+   - Agregación de datos
+   - Optimización de respuestas
+   - Transformación de datos
+
+3. REST API
+   - Recursos bien definidos
+   - Métodos HTTP estándar
+   - Respuestas JSON
+
+4. ORM (Object-Relational Mapping)
+   - JPA para mapeo de entidades
+   - Transaccionalidad automática
+   - Consultas seguras
+
+5. Componentes React Funcionales
+   - Hooks (useState, useEffect)
+   - Composición de componentes
+   - Reutilización de lógica
+
+
+GIT FLOW Y BRANCHING
+═══════════════════════════════════════════════════════════════════════════════
+
+Ramas Principales:
+- main     → Código en producción (releases)
+- develop  → Rama de integración de features
+
+Ramas de Soporte:
+- feature/* → Nuevas características
+- release/* → Preparación de releases
+- hotfix/*  → Correcciones críticas
+- fix/*     → Correcciones menores
+
+Convenciones de Commits:
+- feat:     Nueva funcionalidad
+- fix:      Corrección de bug
+- docs:     Cambios de documentación
+- refactor: Refactoring de código
+- test:     Agregar tests
+
+Ejemplo:
+- git checkout -b feature/agregar-grafico-ventas
+- git commit -m "feat(dashboard): agregar gráfico de ventas"
+- git push origin feature/agregar-grafico-ventas
+- Crear Pull Request en GitHub
+
+
+ESTRUCTURA DE BASES DE DATOS
+═══════════════════════════════════════════════════════════════════════════════
+
+Cuatro bases de datos MySQL independientes:
+
+1. bff_db
+   - Tablas de sesiones y caché
+
+2. inventario_db
+   - Tabla: productos
+   - Campos: id, nombre, descripción, precio, stock, stockMinimo
+
+3. pedidos_db
+   - Tabla: pedidos
+   - Campos: id, numeroPedido, cliente, email, estado, monto, cantidad, 
+             tipoEnvio, fechaCreacion, fechaEntrega
+
+4. envios_db
+   - Tabla: envios
+   - Campos para tracking y logística
+
+
+DESPLIEGUE CON DOCKER COMPOSE
+═══════════════════════════════════════════════════════════════════════════════
+
+Archivo: docker-compose.yml
+
+Servicios incluidos:
+- mysql        → Base de datos
+- api-gateway  → Puerto 8000
+- bff-service  → Puerto 8090
+- inventario   → Puerto 8081
+- pedidos      → Puerto 8082
+- envios       → Puerto 8083
+- frontend     → Puerto 3000
+
+Comandos:
+- docker-compose up --build   → Levanta stack completo
+- docker-compose down         → Detiene servicios
+- docker-compose logs -f      → Muestra logs en tiempo real
+
+
+ACCESO A APLICACIÓN
+═══════════════════════════════════════════════════════════════════════════════
+
+Una vez levantada la aplicación (con Docker Compose o local):
+
+Frontend:         http://localhost:3000
+API Gateway:      http://localhost:8000
+BFF Service:      http://localhost:8090
+Inventario:       http://localhost:8081
+Pedidos:          http://localhost:8082
+Envíos:           http://localhost:8083
+
+Base de datos:    localhost:3306
+Usuario MySQL:    root
+Contraseña:       password (configurable en docker-compose.yml)
+
+
+INSTRUCCIONES DE INSTALACIÓN RÁPIDA
+═══════════════════════════════════════════════════════════════════════════════
+
+CON DOCKER (Recomendado):
+1. Clonar: git clone https://github.com/Xniper21/smartlogix.git
+2. Entrar: cd smartlogix
+3. Compilar: 
+   - cd api-gateway && mvnw clean package && cd ..
+   - cd bff-service && mvnw clean package && cd ..
+   - cd inventario-service && mvnw clean package && cd ..
+   - cd pedidos-service && mvnw clean package && cd ..
+   - cd envios-service && mvnw clean package && cd ..
+4. Levantar: docker-compose up --build
+
+SIN DOCKER:
+1. Clonar el repositorio
+2. Crear bases de datos MySQL
+3. Compilar cada servicio: mvn clean package
+4. Ejecutar cada servicio en terminal separada
+5. Ejecutar frontend: npm install && npm run dev
+
+Acceder a http://localhost:3000
+
+
+INFORMACIÓN DE CONTACTO Y SOPORTE
+═══════════════════════════════════════════════════════════════════════════════
+
+Repositorio Principal:
+https://github.com/Xniper21/smartlogix
+
+Para reportar problemas o sugerencias:
+- Crear un Issue en GitHub
+- Hacer Pull Request con mejoras
+
+Documentación completa incluida en el repositorio:
+- README.md
+- ARQUITECTURA.md
+- DECISIONES_ARQUITECTONICAS.md
+- GIT_FLOW.md
+- INSTRUCCIONES.md
+
+
+VERSIONES UTILIZADAS
+═══════════════════════════════════════════════════════════════════════════════
+
+Frontend:
+- Node.js:       18.0.0+
+- React:         18.2.0
+- Vite:          5.0.0
+- Tailwind CSS:  3.4.4
+- Recharts:      3.8.1
+
+Backend:
+- Java:          17
+- Spring Boot:   3.2.0
+- Maven:         3.8.0+
+- MySQL:         8.0+
+
+DevOps:
+- Docker:        20.10+
+- Docker Compose: 2.0+
+- Git:           2.30+
+
+
+================================================================================
+Fin del documento
+Evaluación Parcial N°2 - SmartLogix
+Mayo 2026
+================================================================================
